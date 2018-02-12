@@ -15,7 +15,7 @@ class Service:
 		Service.totDownstream=Service.totDownstream+int(gDownstream)+int(excessDownstream)
 		Service.totUpstream=Service.totUpstream+int(gUpstream)+int(excessUpstream)
 
-	def mostrarConfig(self):
+	def showConfig(self):
 		print("Guaranteed downstream: " + self.gDownstream +" Mbps")
 		print("Excess downstream: " + self.excessDownstream +" Mbps")
 		print("Guaranteed upstream: " + self.gUpstream +" Mbps")
