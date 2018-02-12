@@ -12,7 +12,7 @@ def MenuIni():
 def serviceConf():
 	print("You have chosen: Service configuration\n")
 	servicio = Service("30", "10", "5", "5", "833", "1", "internet")
-	servicio.mostrarConfig()
+	servicio.showConfig()
 
 def Main():
 
