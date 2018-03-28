@@ -138,35 +138,40 @@ def MenuModify():
 	print("3. Guaranteed upstream")
 	print("4. Excess upstream")
 	print("5. VLAN")
-	print("6. Modify!\n")
+	print("6. VLAN Priority")
+	print("7. Modify!\n")
 
 def serviceConf():
 
 	while True:
 		MenuService()
 		option=input("Please, select what do you want to do: ")
-
-		if int(option) == 1:
-			os.system('clear')
-			Service.showServices()
-			input("Press enter to continue...")
-			os.system('clear')
-		elif int(option) == 2:
-			os.system('clear')
-			createService()
-			os.system('clear')
-		elif int(option) == 3:
-			os.system('clear')
-			modifyService()
-			os.system('clear')
-		elif int(option) == 4:
-			os.system('clear')
-			deleteService()
-			os.system('clear')
-		elif int(option) == 5:
-			os.system('clear')
-			return
-		else:
+		try:	
+			if int(option) == 1:
+				os.system('clear')
+				Service.showServices()
+				input("Press enter to continue...")
+				os.system('clear')
+			elif int(option) == 2:
+				os.system('clear')
+				createService()
+				os.system('clear')
+			elif int(option) == 3:
+				os.system('clear')
+				modifyService()
+				os.system('clear')
+			elif int(option) == 4:
+				os.system('clear')
+				deleteService()
+				os.system('clear')
+			elif int(option) == 5:
+				os.system('clear')
+				return
+			else:
+				os.system('clear')
+				input("Please, introduce a valid option!")
+				os.system('clear')
+		except ValueError:
 			os.system('clear')
 			input("Please, introduce a valid option!")
 			os.system('clear')
@@ -176,7 +181,7 @@ def attachService():
 	Service.showServices()
 	id_service=input("Select the ID of the service which you want to attach to the ONT: ")
 	options=Service.getService(id_service)
-	service = Service(options[1], options[3], options[2], options[4], options[5], options[6])
+	service = Service(options[1], options[3], options[2], options[4], options[5], options[6],options[7])
 	MAC = get_ID_ONU()
 	
 	cnx = mysql.connector.connect(user='root', password='tfg_2017',host='127.0.0.1',database='gponServices')
@@ -213,23 +218,31 @@ def detachService():
 	cnx.close()
 
 	print(t)
+	#Service.showAllAttachedServices()
 	id_onu=input("Select ID: ")
 	Service.showAttachedServices(MAC[int(id_onu)])
-	Service.borrar_configuracion(int(id_onu),MAC[int(id_onu)])
+	id_service=input("Select what service do you want detach: ")
+	Service.borrar_configuracion(int(id_onu),MAC[int(id_onu)],id_service)
 
 def createService():
 	print("You have chosen: Create new service\n")
-	typeService = input("Type of service: ")
-	VLAN = input("VLAN: ")
-	downstream = input("Guaranteed downstream: ")
-	downstream = int(downstream)/64
-	downstream = math.floor(downstream)*64
-	eDownstream = input("Excess downstream: ")
-	eDownstream = int(eDownstream)/64
-	eDownstream = math.floor(eDownstream)*64
-	upstream = input("Guaranteed upstream: ")
-	eUpstream = input("Excess upstream: ")
-	service = Service(downstream, upstream, eDownstream, eUpstream, VLAN, typeService)
+	try:
+		typeService = input("Type of service: ")
+		VLAN = input("VLAN: ")
+		VLANpriority = input("VLAN Priority: ")
+		downstream = input("Guaranteed downstream (Kbps): ")
+		downstream = int(downstream)/64
+		downstream = math.floor(downstream)*64
+		eDownstream = input("Excess downstream (Kbps): ")
+		eDownstream = int(eDownstream)/64
+		eDownstream = math.floor(eDownstream)*64
+		upstream = input("Guaranteed upstream (Mbps): ")
+		eUpstream = input("Excess upstream (Mbps): ")
+	except ValueError:
+		os.system('clear')
+		input("Please, introduce a valid option!")
+		os.system('clear')
+	service = Service(downstream, upstream, eDownstream, eUpstream, VLAN, VLANpriority, typeService)
 	print("\n")
 	service.insertConfig()
 
@@ -238,48 +251,66 @@ def modifyService():
 	Service.showServices()
 	id_service=input("Select the ID of the service which you want to modify: ")
 	options=Service.getService(id_service)
-	service = Service(options[1], options[3], options[2], options[4], options[5], options[6])
+	service = Service(options[1], options[3], options[2], options[4], options[5], options[6], options[7])
 	os.system('clear')
 	while True:
 		print("New configuration:\n")
 		service.showConfig()
 		MenuModify()
-		option=input("Please, select what do you want to do: ")
+		try:
+			option=input("Please, select what do you want to do: ")
 
-		if int(option) == 1:
-			os.system('clear')
-			service.gDownstream=input("Select new guaranteed downstream (Kbps): ")
-			service.gDownstream = int(service.gDownstream)/64
-			service.gDownstream = math.floor(service.gDownstream)*64
-			os.system('clear')
-		elif int(option) == 2:
-			os.system('clear')
-			service.excessDownstream=input("Select new excess downstream (Kbps): ")
-			service.excessDownstream = int(service.excessDownstream)/64
-			service.excessDownstream = math.floor(service.excessDownstreamm)*64
-			os.system('clear')
-		elif int(option) == 3:
-			os.system('clear')
-			service.gUpstream=input("Select new guaranteed upstream (Mbps): ")
-			os.system('clear')
-		elif int(option) == 4:
-			os.system('clear')
-			service.excessUpstream=input("Select new excess upstream (Mbps): ")
-			os.system('clear')
-		elif int(option) == 5:
-			os.system('clear')
-			service.VLAN=input("Select new VLAN: ")
-			os.system('clear')
-		elif int(option) == 6:
-			os.system('clear')
-			input("The service was modified. Press enter to continue...")
-			break
-		else:
+			if int(option) == 1:
+				os.system('clear')
+				service.gDownstream=input("Select new guaranteed downstream (Kbps): ")
+				service.gDownstream = int(service.gDownstream)/64
+				service.gDownstream = math.floor(service.gDownstream)*64
+				os.system('clear')
+			elif int(option) == 2:
+				os.system('clear')
+				service.excessDownstream=input("Select new excess downstream (Kbps): ")
+				service.excessDownstream = int(service.excessDownstream)/64
+				service.excessDownstream = math.floor(service.excessDownstream)*64
+				os.system('clear')
+			elif int(option) == 3:
+				os.system('clear')
+				service.gUpstream=input("Select new guaranteed upstream (Mbps): ")
+				os.system('clear')
+			elif int(option) == 4:
+				os.system('clear')
+				service.excessUpstream=input("Select new excess upstream (Mbps): ")
+				os.system('clear')
+			elif int(option) == 5:
+				os.system('clear')
+				service.VLAN=input("Select new VLAN: ")
+				os.system('clear')
+			elif int(option) == 6:
+				os.system('clear')
+				service.VLANpriority=input("Select new VLAN Priority: ")
+				os.system('clear')
+			elif int(option) == 7:
+				os.system('clear')
+				input("The service was modified. Press enter to continue...")
+				break
+			else:
+				os.system('clear')
+				input("Please, introduce a valid option!")
+				os.system('clear')
+		except ValueError:
 			os.system('clear')
 			input("Please, introduce a valid option!")
 			os.system('clear')
 
 	service.updateConfig(id_service)
+	MAC = get_ID_ONU()
+	cnx = mysql.connector.connect(user='root', password='tfg_2017',host='127.0.0.1',database='gponServices')
+	cursor = cnx.cursor()
+	cursor.execute("select id_ont from ont_service where id_service='"+id_service+"'")
+	port_ID=cursor.fetchone()
+	for i in MAC:
+		for k in port_ID:
+			if i == k: #Actualiza valores del servicio si dicho servicio está siendo utilizado por una ONU
+				service.modifyAttachedService(MAC.index(i),i, id_service)
 
 def deleteService():
 	print("You have chosen: Delete service\n")
@@ -293,28 +324,33 @@ def Main():
 
 	while True:
 		MenuIni()
-		iniOption=input("What do you want to do?: ")
+		try:
+			iniOption=input("What do you want to do?: ")
 
-		if int(iniOption) == 1:
-			os.system('clear')
-			serviceConf()
-			os.system('clear')
-		elif int(iniOption) == 2:
-			os.system('clear')
-			attachService()
-			os.system('clear')
-		elif int(iniOption) == 3:
-			os.system('clear')
-			detachService()
-			os.system('clear')
-		elif int(iniOption) == 4:
-			os.system('clear')
-			input("opcion 4")
-			os.system('clear')
-		elif int(iniOption) == 5:
-			os.system('clear')
-			quit("See you!")
-		else:
+			if int(iniOption) == 1:
+				os.system('clear')
+				serviceConf()
+				os.system('clear')
+			elif int(iniOption) == 2:
+				os.system('clear')
+				attachService()
+				os.system('clear')
+			elif int(iniOption) == 3:
+				os.system('clear')
+				detachService()
+				os.system('clear')
+			elif int(iniOption) == 4:
+				os.system('clear')
+				input("opcion 4")
+				os.system('clear')
+			elif int(iniOption) == 5:
+				os.system('clear')
+				quit("See you!")
+			else:
+				os.system('clear')
+				input("Please, introduce a valid option!")
+				os.system('clear')
+		except ValueError:
 			os.system('clear')
 			input("Please, introduce a valid option!")
 			os.system('clear')

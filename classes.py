@@ -10,12 +10,13 @@ class Service:
 	#totUpstream = 0
 	#id_service=0
 
-	def __init__(self, gDownstream, gUpstream, excessDownstream, excessUpstream, VLAN, typeService):
+	def __init__(self, gDownstream, gUpstream, excessDownstream, excessUpstream, VLAN, VLANpriority, typeService):
 		self.gDownstream=gDownstream
 		self.gUpstream=gUpstream
 		self.excessDownstream=excessDownstream
 		self.excessUpstream=excessUpstream
 		self.VLAN=VLAN
+		self.VLANpriority=VLANpriority
 		#self.idService=idService
 		self.typeService=typeService
 
@@ -23,8 +24,8 @@ class Service:
 		#Service.totUpstream=Service.totUpstream+int(gUpstream)+int(excessUpstream)
 
 	def showConfig(self):
-		t = PrettyTable(['Guaranteed Downstream', 'Excess Downstream', 'Guaranteed Upstream', 'Excess Upstream', 'VLAN', 'Type of service'])
-		t.add_row([str(self.gDownstream)+" Kbps", str(self.excessDownstream)+" Kbps",str(self.gUpstream)+" Mbps",str(self.excessUpstream)+" Mbps",self.VLAN,self.typeService])
+		t = PrettyTable(['Guaranteed Downstream', 'Excess Downstream', 'Guaranteed Upstream', 'Excess Upstream', 'VLAN', 'VLAN Priority', 'Type of service'])
+		t.add_row([str(self.gDownstream)+" Kbps", str(self.excessDownstream)+" Kbps",str(self.gUpstream)+" Mbps",str(self.excessUpstream)+" Mbps",self.VLAN,self.VLANpriority,self.typeService])
 		print(t)
 
 	def insertConfig(self):
@@ -35,7 +36,7 @@ class Service:
 		# for i in cursor:
 		# 	print(int(i)+2)
 		# input()
-		query="insert into services (gDownstream, excessDownstream, gUpstream, excessUpstream, VLAN, typeService) values ('"+str(self.gDownstream)+"', '"+str(self.excessDownstream)+"', '"+str(self.gUpstream)+"', '"+str(self.excessUpstream)+"', '"+str(self.VLAN)+"', '"+self.typeService+"')"
+		query="insert into services (gDownstream, excessDownstream, gUpstream, excessUpstream, VLAN, typeService, VLANpriority) values ('"+str(self.gDownstream)+"', '"+str(self.excessDownstream)+"', '"+str(self.gUpstream)+"', '"+str(self.excessUpstream)+"', '"+str(self.VLAN)+"', '"+self.typeService+"', '"+str(self.VLANpriority)+"')"
 		cursor.execute(query)
 		cnx.commit()
 
@@ -45,7 +46,7 @@ class Service:
 	def updateConfig(self,id_service):
 		cnx = mysql.connector.connect(user='root', password='tfg_2017',host='127.0.0.1',database='gponServices')
 		cursor = cnx.cursor()
-		query="update services set gDownstream='"+str(self.gDownstream)+"', excessDownstream='"+str(self.excessDownstream)+"', gUpstream='"+str(self.gUpstream)+"', excessUpstream='"+str(self.excessUpstream)+"',VLAN='"+str(self.VLAN)+"' where id_service='"+id_service+"'"
+		query="update services set gDownstream='"+str(self.gDownstream)+"', excessDownstream='"+str(self.excessDownstream)+"', gUpstream='"+str(self.gUpstream)+"', excessUpstream='"+str(self.excessUpstream)+"', VLAN='"+str(self.VLAN)+"', VLANpriority='"+str(self.VLANpriority)+"' where id_service='"+id_service+"'"
 		cursor.execute(query)
 		cnx.commit()
 
@@ -57,9 +58,9 @@ class Service:
 		cursor = cnx.cursor()
 		query="select * from services"
 		cursor.execute(query)
-		t = PrettyTable(['ID', 'Guaranteed Downstream', 'Excess Downstream', 'Guaranteed Upstream', 'Excess Upstream', 'VLAN', 'Type of service'])
-		for (id_service, gDownstream, excessDownstream,gUpstream,excessUpstream,VLAN,typeService) in cursor:
-			t.add_row([id_service, str(gDownstream)+" Kbps", str(excessDownstream)+" Kbps",str(gUpstream)+" Mbps",str(excessUpstream)+" Mbps",VLAN,typeService])
+		t = PrettyTable(['ID', 'Guaranteed Downstream', 'Excess Downstream', 'Guaranteed Upstream', 'Excess Upstream', 'VLAN', 'VLAN Priority', 'Type of service'])
+		for (id_service, gDownstream, excessDownstream,gUpstream,excessUpstream,VLAN,typeService,VLANpriority) in cursor:
+			t.add_row([id_service, str(gDownstream)+" Kbps", str(excessDownstream)+" Kbps",str(gUpstream)+" Mbps",str(excessUpstream)+" Mbps",VLAN,VLANpriority,typeService])
 
 		print(t)
 
@@ -82,8 +83,8 @@ class Service:
 		cursor = cnx.cursor()
 		query="select * from services where id_service='"+id_service+"'"
 		cursor.execute(query)
-		for (id_service,gDownstream, excessDownstream,gUpstream,excessUpstream,VLAN,typeService) in cursor:
-			options=[id_service,gDownstream, excessDownstream,gUpstream,excessUpstream,VLAN,typeService]
+		for (id_service,gDownstream, excessDownstream,gUpstream,excessUpstream,VLAN,typeService, VLANpriority) in cursor:
+			options=[id_service,gDownstream, excessDownstream,gUpstream,excessUpstream,VLAN,VLANpriority,typeService]
 		#service = Service(cursor.downstream, cursor.upstream, cursor.eDownstream, cursor.eUpstream, cursor.VLAN, cursor.typeService)
 		cursor.close()
 		cnx.close()
@@ -107,14 +108,14 @@ class Service:
 		
 		i=0
 		if n_service[0] >= 1:
-			cursor.execute("select max(alloc_port), max(pointer) from ont_service where id_ont='"+MAC_ONU+"'")
-			alloc_pointer=cursor.fetchone()
-			port_ID.append(alloc_pointer[0]+1)
-			alloc_ID.append(alloc_pointer[0]+1)
+			cursor.execute("select max(alloc_port), max(pointer), max(profile) from ont_service where id_ont='"+MAC_ONU+"'")
+			alloc_pointer_profile=cursor.fetchone()
+			port_ID.append(alloc_pointer_profile[0]+1)
+			alloc_ID.append(alloc_pointer_profile[0]+1)
 			num_instancia.append(n_service[0]+2)
 			tcont_ID.append(n_service[0])
-			puntero.append(alloc_pointer[1]+1)
-			ds_profile_index.append(n_service[0])
+			puntero.append(alloc_pointer_profile[1]+1)
+			ds_profile_index.append(alloc_pointer_profile[2]+1)
 			cursor.close()
 			cnx.close()
 		else:
@@ -133,6 +134,7 @@ class Service:
 		# ancho de banda Downstream garantizado y en exceso y ancho de banda Upstream
 		# garantizado y Best Effort
 		VLAN_ID = []
+		VLAN_PRIORITY =[]
 		BW_Downstream_GR = []
 		BW_Downstream_Excess = []
 		BW_Upstream_GR = []
@@ -148,6 +150,10 @@ class Service:
 		# solo ofrece servicio en las VLAN 833 y 806            
 		VLAN_ID.append(str(self.VLAN))
 		print("El identificador VLAN para el servicio es:", VLAN_ID[i])                                                  
+		print("\n")
+
+		VLAN_PRIORITY.append(str(self.VLANpriority))
+		print("La prioridad VLAN para el servicio es:", VLAN_PRIORITY[i])                                                  
 		print("\n")
 			    
 		# Segundo bucle: se pide el ancho de banda garantizado en sentido Downstream.
@@ -214,7 +220,10 @@ class Service:
 		# Posteriormente serán ejecutados en el CLI con la función write.
 		# Primero se crea el canal OMCI de comunicación (con el mismo identificador que el de la ONU por convención)
 		# Se resetean las entidades MIB que pudiera haber y se activa fec en uplink (pasos opcionales)
-		inicio = "configure \n olt-device 0 \n olt-channel 0 \n onu-local " + ID_ONU + " \n omci-port  " + ID_ONU + "  \n exit \n onu-omci  " + ID_ONU + "  \n ont-data mib-reset \n exit \n fec direction uplink  " + ID_ONU + "  \n onu-local  " + ID_ONU + "  \n"                
+		if n_service[0]==0:
+			inicio = "configure \n olt-device 0 \n olt-channel 0 \n onu-local " + ID_ONU + " \n omci-port  " + ID_ONU + "  \n exit \n onu-omci  " + ID_ONU + "  \n ont-data mib-reset \n exit \n fec direction uplink  " + ID_ONU + "  \n onu-local  " + ID_ONU + "  \n"                
+		else:
+			inicio = "configure \n olt-device 0 \n olt-channel 0 \n onu-local " + ID_ONU + "  \n"                
 		tn.write(inicio.encode('ascii') + b"\n")
 		time.sleep(0.2)
   
@@ -249,16 +258,17 @@ class Service:
 
 		# Creación de MAC Brigde Service Profile. Se asociará esta entidad con los MAC Bridge 
 		# Port Configuration Data a través del bridge-group-id en los siguientes comandos.
-		macservice = "mac-bridge-service-profile create slot-id 0 bridge-group-id 1 spanning-tree-ind true learning-ind true atm-port-bridging-ind true priority 32000 max-age 1536 hello-time 256 forward-delay 1024 unknown-mac-address-discard false mac-learning-depth 255 dynamic-filtering-ageing-time 1000 \n"
+		if n_service[0]==0:
+			macservice = "mac-bridge-service-profile create slot-id 0 bridge-group-id 1 spanning-tree-ind true learning-ind true atm-port-bridging-ind true priority 32000 max-age 1536 hello-time 256 forward-delay 1024 unknown-mac-address-discard false mac-learning-depth 255 dynamic-filtering-ageing-time 1000 \n"
 		# Creación del primer MAC Bridge Port Configuration Data. Irá asociado a la entidad 
 		# extended-vlan-tagging-operation-config-data. Para ello, el tp-type (tipo del punto 
 		# de terminación del MAC Bridge) ha de ser lan y el puntero tp-ptr debe tener el mismo 
 		# valor que el nº de instancia de la entidad extended-vlan-tagging-operation-config-data.
-		macbridge1 = "mac-bridge-pcd create instance 1 bridge-id-ptr 1 port-num 1 tp-type lan tp-ptr 257 port-priority 2 port-path-cost 32 port-spanning-tree-ind true encap-method llc lanfcs-ind forward \n"
-		tn.write(macservice.encode('ascii') + b"\n")
-		time.sleep(0.2)
-		tn.write(macbridge1.encode('ascii') + b"\n")
-		time.sleep(0.2) 
+			macbridge1 = "mac-bridge-pcd create instance 1 bridge-id-ptr 1 port-num 1 tp-type lan tp-ptr 257 port-priority 2 port-path-cost 32 port-spanning-tree-ind true encap-method llc lanfcs-ind forward \n"
+			tn.write(macservice.encode('ascii') + b"\n")
+			time.sleep(0.2)
+			tn.write(macbridge1.encode('ascii') + b"\n")
+			time.sleep(0.2)
 			    
 		# Creación de los restantes Mac Brigde Port Configuration Data. Irán asociado a la entidades 
 		# VLAN-tagging-filter-data mediante los números de instancia. También irán asociados a los 
@@ -289,16 +299,17 @@ class Service:
 
 		# Creación de los VLAN Tagging Filter Data con los identficadores VLAN definidos arriba. 
 		# Los números de instancia deben coincidir con los de los MAC Bridge Port Configuration Data asociados.
-		vlantagging = "vlan-tagging-filter-data create instance " + str(num_instancia[i]).strip('[]') + "  forward-operation h-vid-a vlan-tag1 " + str(VLAN_ID[i]).strip('[]') + " vlan-priority1 0  vlan-tag2 null vlan-priority2 null vlan-tag3 null vlan-priority3 null vlan-tag4 null vlan-priority4 null vlan-tag5 null vlan-priority5 null vlan-tag6 null vlan-priority6 null vlan-tag7 null vlan-priority7 null vlan-tag8 null vlan-priority8 null vlan-tag9 null vlan-priority9 null vlan-tag10 null vlan-priority10 null vlan-tag11 null vlan-priority11 null vlan-tag12 null vlan-priority12 null \n"
+		vlantagging = "vlan-tagging-filter-data create instance " + str(num_instancia[i]).strip('[]') + "  forward-operation h-vid-a vlan-tag1 " + str(VLAN_ID[i]).strip('[]') + " vlan-priority1 " + str(VLAN_PRIORITY[i]).strip('[]')+ " vlan-tag2 null vlan-priority2 null vlan-tag3 null vlan-priority3 null vlan-tag4 null vlan-priority4 null vlan-tag5 null vlan-priority5 null vlan-tag6 null vlan-priority6 null vlan-tag7 null vlan-priority7 null vlan-tag8 null vlan-priority8 null vlan-tag9 null vlan-priority9 null vlan-tag10 null vlan-priority10 null vlan-tag11 null vlan-priority11 null vlan-tag12 null vlan-priority12 null \n"
 		tn.write(vlantagging.encode('ascii') + b"\n")
 		time.sleep(0.2)
 
 		# Creación de la entidad Extended VLAN Tagging Operation Config Data, que será configurada en el paso posterior. 
 		# Sirve para gestionar los identificadores VLAN. Esta entidad está asociada al primer MAC Bridge Port Configuration Data 
 		# a través del número de instancia, que coincide con el tp-ptr del MAC Bridge Port Configuration Data.
-		extendedvlan = "extended-vlan-tagging-operation-config-data create instance 257 association-type pptp-eth-uni associated-me-ptr 257 \n"
-		tn.write(extendedvlan.encode('ascii') + b"\n")
-		time.sleep(0.2)
+		if n_service[0]==0:
+			extendedvlan = "extended-vlan-tagging-operation-config-data create instance 257 association-type pptp-eth-uni associated-me-ptr 257 \n"
+			tn.write(extendedvlan.encode('ascii') + b"\n")
+			time.sleep(0.2)
 			    
 		# Configuración de la entidadExtended VLAN Tagging Operation Config Data. Se debe configurar
 		# para cada identificador VLAN.
@@ -329,26 +340,27 @@ class Service:
 		# índice de perfil. Para asociar los perfiles creados, se deben utilizar esos índices
 		# de perfil y asociarlos a los puertos definidos anteriormente. Para ello, se vuelcan los datos
 		# enviados y recibidos del CLI en un fichero, del que se extraerán esos índices.
-		datos_perfil = tn.read_very_eager().decode()
-		outfile = open(nombre_archivo, 'a')
-		outfile.write(datos_perfil)
-		outfile.close()
-		outfile = open(nombre_archivo, 'r')             
-		lines = outfile.readlines()
-		true_ds_profile = 0
-		# Se busca el índice de perfil que primero aparezca en el fichero.
-		for i in range (0,500):
-			if true_ds_profile == 1:
-			   break                
-			j = str(i)
-			cadena = 'downstream_profile_index: ' + j + ' '
-			for line in lines:
-			    if cadena in line:
-			        j = int(j)
-			        ds_profile_index[0] = j
-			        true_ds_profile = 1            
-			    
-		outfile.close()
+		if n_service[0] == 0:
+			datos_perfil = tn.read_very_eager().decode()
+			outfile = open(nombre_archivo, 'a')
+			outfile.write(datos_perfil)
+			outfile.close()
+			outfile = open(nombre_archivo, 'r')             
+			lines = outfile.readlines()
+			true_ds_profile = 0
+			# Se busca el índice de perfil que primero aparezca en el fichero.
+			for i in range (0,500):
+				if true_ds_profile == 1:
+				   break                
+				j = str(i)
+				cadena = 'downstream_profile_index: ' + j + ' '
+				for line in lines:
+				    if cadena in line:
+				        j = int(j)
+				        ds_profile_index[0] = j
+				        true_ds_profile = 1            
+				    
+			outfile.close()
 		i=0	       
 		# Asignación de los perfiles de ancho de banda Downstream a los puertos correspondientes
 		# mediante los índices de perfil buscados anteriormente.
@@ -395,7 +407,7 @@ class Service:
 		#Meto en la bse de datos la configuracion
 		cnx = mysql.connector.connect(user='root', password='tfg_2017',host='127.0.0.1',database='gponServices')
 		cursor = cnx.cursor()
-		query="insert into ont_service (id_ont, id_service, alloc_port, pointer) values ('"+str(MAC_ONU)+"', '"+str(id_service)+"', '"+str(port_ID[0])+"', '"+str(puntero[0])+"')"
+		query="insert into ont_service (id_ont, id_service, alloc_port, pointer, profile) values ('"+str(MAC_ONU)+"', '"+str(id_service)+"', '"+str(port_ID[0])+"', '"+str(puntero[0])+"', '"+str(ds_profile_index[0])+"')"
 		cursor.execute(query)
 		cnx.commit()
 
@@ -454,7 +466,7 @@ class Service:
 		# mantiene mientras no se apague la red ni se cambie al modo de gestión TGMS). 
 		# La función también actualiza el fichero XML para recuperar configuraciones
 		# cuando se apaga la red o se cambia al TGMS.
-	def borrar_configuracion(ID_ONU,MAC_ONU):
+	def borrar_configuracion(ID_ONU,MAC_ONU,id_service):
 
 		 # Host y puerto al que se hace la conexión Telnet para acceder al CLI                    
 		host = "172.26.128.38"
@@ -483,26 +495,54 @@ class Service:
 		# que forman los servicios.
 		cnx = mysql.connector.connect(user='root', password='tfg_2017',host='127.0.0.1',database='gponServices')
 		cursor = cnx.cursor()
-		cursor.execute("select alloc_port from ont_service where id_ont='"+MAC_ONU+"'")
-		portIDs=cursor.fetchall()
-		for port_ID in portIDs:
-			borrar_perfil = "configure \n olt-device 0 \n olt-channel 0 \n no policing downstream port-configuration entity port-id " + str(port_ID) + " \n end \n"
-			tn.write(borrar_perfil.encode('ascii') + b"\n")
-			time.sleep(0.1)
+		cursor.execute("select alloc_port, profile from ont_service where id_ont='"+MAC_ONU+"' and id_service='"+id_service+"'")
+		port_ID=cursor.fetchone()
+		# borrar_perfil = "configure \n olt-device 0 \n olt-channel 0 \n no policing downstream port-configuration entity port-id " + str(port_ID[0]) + " \n end \n"
+		# tn.write(borrar_perfil.encode('ascii') + b"\n")
+		# time.sleep(0.1)
+		inicio = "configure \n olt-device 0 \n olt-channel 0 \n"                
+		tn.write(inicio.encode('ascii') + b"\n")
+		time.sleep(0.2)
+
+		#Borra asociacion profile-port
+		delprofileport = "no policing downstream port-configuration entity port-id " + str(port_ID[0]) + " \n"
+		tn.write(delprofileport.encode('ascii') + b"\n")
+		time.sleep(0.2)  
+		#Borra port 
+
+		portalloc = "no port " + str(port_ID[0]) + " \n"
+		tn.write(portalloc.encode('ascii') + b"\n")
+		time.sleep(0.2)
+
+		#Borra profile
+		delprofile = "no policing downstream profile ds-profile-index " + str(port_ID[1]) + " \n"
+		tn.write(delprofile.encode('ascii') + b"\n")
+		time.sleep(0.2)
+
+		#Del alloc-id de la ONT
+		delAllocID = "onu-local "+str(ID_ONU)+" \n no alloc-id "+str(port_ID[0])+" \n end \n"
+		tn.write(delAllocID.encode('ascii') + b"\n")
+		time.sleep(0.2)
 		
 		# Tras borrar los perfiles de ancho de banda, se borrar las entidades MIB presentes en 
 		# el canal OMCI asociado a la ONU.
-		borrar_MIB = "configure \n olt-device 0 \n olt-channel 0 \n onu-local " + ID_ONU + " \n omci-port  " + ID_ONU + "  \n exit \n onu-omci  " + ID_ONU + " \n ont-data mib-reset \n exit \n end \n"
-		tn.write(borrar_MIB.encode('ascii') + b"\n")
-		time.sleep(2)
+		# borrar_MIB = "configure \n olt-device 0 \n olt-channel 0 \n onu-local " + ID_ONU + " \n omci-port  " + ID_ONU + "  \n exit \n onu-omci  " + ID_ONU + " \n ont-data mib-reset \n exit \n end \n"
+		# tn.write(borrar_MIB.encode('ascii') + b"\n")
+		# time.sleep(2)
 
-		cursor.execute("delete from ont_service where id_ont='"+MAC_ONU+"'")
+		data = tn.read_very_eager().decode() 
+		outfile = open("borrado.txt", 'a')
+		outfile.write(data)
+		outfile.write("\n\n\n")
+		outfile.close()
+
+		cursor.execute("delete from ont_service where id_ont='"+MAC_ONU+"' and id_service='"+id_service+"'")
 		cnx.commit()
 		cursor.close()
 		cnx.close()
 		# Finalmente se borra el fichero de configuración.
 		# Una vez borrado, se muestra un mensaje informando al usuario.
-		print("\nLa configuración de la ONU con MAC " + MAC_ONU + " ha sido borrada.\n")
+		print("\nLa configuración de la ONU con MAC " + MAC_ONU + " y el servicio "+id_service+" ha sido borrada.\n")
 		input("Press enter to continue...")
     
 		# # Actualización del archivo XML con los datos borrados
@@ -540,13 +580,110 @@ class Service:
 		cursor = cnx.cursor()
 		query="select * from services where id_service in (select id_service from ont_service where id_ont='"+MAC_ONU+"')"
 		cursor.execute(query)
-		t = PrettyTable(['ONT', 'ID', 'Guaranteed Downstream', 'Excess Downstream', 'Guaranteed Upstream', 'Excess Upstream', 'VLAN', 'Type of service'])
+		t = PrettyTable(['ONT', 'ID', 'Guaranteed Downstream', 'Excess Downstream', 'Guaranteed Upstream', 'Excess Upstream', 'VLAN', 'VLAN Priority','Type of service'])
 		#print(cursor.fetchall())
-		for (id_service, gDownstream, excessDownstream,gUpstream,excessUpstream,VLAN,typeService) in cursor:
-			t.add_row([MAC_ONU, id_service, str(gDownstream)+" Kbps", str(excessDownstream)+" Kbps",str(gUpstream)+" Mbps",str(excessUpstream)+" Mbps",VLAN,typeService])
+		for (id_service, gDownstream, excessDownstream,gUpstream,excessUpstream,VLAN,typeService, VLANpriority) in cursor:
+			t.add_row([MAC_ONU, id_service, str(gDownstream)+" Kbps", str(excessDownstream)+" Kbps",str(gUpstream)+" Mbps",str(excessUpstream)+" Mbps",VLAN,VLANpriority,typeService])
 
 		print(t)
 
 		cursor.close()
 		cnx.close()
-		input("Press enter to continue...")
+
+	def showAllAttachedServices():
+		cnx = mysql.connector.connect(user='root', password='tfg_2017',host='127.0.0.1',database='gponServices')
+		cursor = cnx.cursor()
+		query="select * from services where id_service in (select id_service from ont_service)"
+		cursor.execute(query)
+		t = PrettyTable(['ONT', 'ID', 'Guaranteed Downstream', 'Excess Downstream', 'Guaranteed Upstream', 'Excess Upstream', 'VLAN', 'VLAN Priority', 'Type of service'])
+		#print(cursor.fetchall())
+		for (id_service, gDownstream, excessDownstream,gUpstream,excessUpstream,VLAN,typeService) in cursor:
+			t.add_row([MAC_ONU, id_service, str(gDownstream)+" Kbps", str(excessDownstream)+" Kbps",str(gUpstream)+" Mbps",str(excessUpstream)+" Mbps",VLAN,VLANpriority,typeService])
+
+		print(t)
+
+		cursor.close()
+		cnx.close()
+	def modifyAttachedService(self, ID_ONU, MAC_ONU, id_service):
+
+		cnx = mysql.connector.connect(user='root', password='tfg_2017',host='127.0.0.1',database='gponServices')
+		cursor = cnx.cursor()
+		query="select alloc_port, profile from ont_service where id_ont='"+str(MAC_ONU)+"' and id_service='"+str(id_service)+"'"
+		cursor.execute(query)
+		param=cursor.fetchone()
+		host = "172.26.128.38"
+		port = "4551"
+     
+		# Claves de acceso al CLI
+		password1 = "TLNT25"
+		password2 = "TLNT145"
+		enable = "enable"
+
+		ID_ONU = str(ID_ONU)
+    
+		# Acceso al CLI: conexión Telnet al host y puerto indicados anteriormente
+		tn = telnetlib.Telnet(host,port,1)
+		# Mediante la función write de telnetlib, escritura de los comandos que permiten
+		# acceder al menú de privilegios del CLI
+		tn.write(password1.encode('ascii') + b"\n")      
+		time.sleep(0.1)     
+		tn.write(enable.encode('ascii') + b"\n")
+		time.sleep(0.1)     
+		tn.write(password2.encode('ascii') + b"\n")
+		time.sleep(0.1)
+
+		inicio = "configure \n olt-device 0 \n olt-channel 0 \n"
+		tn.write(inicio.encode('ascii') + b"\n")
+		time.sleep(0.2)
+
+		#Borra asociacion profile-port
+		delprofileport = "no policing downstream port-configuration entity port-id " + str(param[0]) + " \n"
+		tn.write(delprofileport.encode('ascii') + b"\n")
+		time.sleep(0.2)
+		#Borra profile
+		delprofile = "no policing downstream profile ds-profile-index " + str(param[1]) + " \n"
+		tn.write(delprofile.encode('ascii') + b"\n")
+		time.sleep(0.2)
+		# Creación de los perfiles de ancho de banda en sentido Downstream con los parámetros 
+		# definidos por el usuario anteriormente.
+		perfildownstreamconf = "policing downstream profile committed-max-bw " + str(int(self.gDownstream)) + " committed-burst-size 1023 excess-max-bw " + str(int(self.excessDownstream)) + " excess-burst-size 1023 \n"
+		tn.write(perfildownstreamconf.encode('ascii') + b"\n")
+		time.sleep(0.2)
+		# Asignación de los perfiles de ancho de banda Downstream a los puertos correspondientes
+		# mediante los índices de perfil buscados anteriormente.
+		perfildownstreamassign = "policing downstream port-configuration entity port-id " + str(param[0]) + " ds-profile-index " + str(param[1]) + " \n"    
+		tn.write(perfildownstreamassign.encode('ascii') + b"\n")
+		time.sleep(0.2)
+		# El comando exit hace salir hacia el menú anterior del CLI en la estructura de menús  
+		salir = "exit \n"
+		tn.write(salir.encode('ascii') + b"\n")
+		time.sleep(0.2)
+
+		# Desde el menú de configuración del algoritmo DBA, se definirián los perfiles de
+		# ancho de banda en sentido Upstream
+		dba = "pon \n dba pythagoras 0 \n "
+		tn.write(dba.encode('ascii') + b"\n")
+		time.sleep(0.2)
+
+		# Cada perfil upstream irá asociado a un Alloc-ID y estará configurado con los
+		# parámetros que haya definido el usuario.
+		perfilupstream = "sla " + str(param[0]) + " service data status-report nsr gr-bw " + str(int(self.gUpstream)) + " gr-fine 0 be-bw " + str(int(self.gUpstream)+int(self.excessUpstream)) + " be-fine 0 \n"     
+		tn.write(perfilupstream.encode('ascii') + b"\n")
+		time.sleep(0.2)
+
+		# El comando end hace salir directamente al modo privilegiado en la estructura
+		# de menús del CLI
+		final = "end \n"
+		tn.write(final.encode('ascii') + b"\n")
+		time.sleep(0.2)         
+			    
+		# Se vuelcan todos los datos en el fichero definido anteriormente (la opción 'a'
+		# hace que los datos se añadan al final del fichero) de forma que el fichero recogerá
+		# toda la configuración del servicio de Internet
+		data = tn.read_very_eager().decode() 
+		outfile = open("log_mod.txt", 'a')
+		outfile.write(data)
+		outfile.write("\n\n\n")
+		outfile.close()
+
+
